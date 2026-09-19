@@ -10,17 +10,34 @@ checkout scm
 }
 }
 
-stage('Run Playwright Tests') {
+stage('Check Docker') {
 steps {
-bat 'mvn test'
+bat 'docker --version'
+bat 'docker info'
+}
+}
+
+stage('Build Docker Image') {
+steps {
+bat 'docker build -t playwright-java:latest .'
+}
+}
+
+stage('Run Tests in Docker') {
+steps {
+bat 'docker run --rm playwright-java:latest'
 }
 }
 }
 
 post {
 always {
-junit 'target/surefire-reports/*.xml'
-}
-}
-}
 
+junit allowEmptyResults: true,
+testResults: 'target/surefire-reports/*.xml'
+
+archiveArtifacts artifacts: 'target/screenshots/**/*,target/videos/**/*,target/traces/**/*',
+allowEmptyArchive: true
+}
+}
+}
